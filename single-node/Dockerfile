@@ -17,7 +17,7 @@ RUN echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true 
   apt-get install -y oracle-java7-installer oracle-java7-set-default
 
 # Install SSH server and Zookeeper
-RUN apt-get install -y ant openssh-server zookeeperd=3.4.5
+RUN apt-get install -y ant openssh-server zookeeperd
 
 # Download Hadoop
 RUN wget -q 'http://archive.apache.org/dist/hadoop/core/hadoop-0.20.204.0/hadoop-0.20.204.0-bin.tar.gz'
