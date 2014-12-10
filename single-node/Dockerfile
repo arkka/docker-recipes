@@ -70,7 +70,7 @@ ADD config/hdfs-site.xml /tmp/hadoop-etc/hdfs-site.xml
 ADD config/hbase-site.xml /tmp/hbase-etc/hbase-site.xml
 ADD config/nutch-site.xml /tmp/nutch-etc/nutch-site.xml
 RUN mv /tmp/hadoop-etc/* /opt/hadoop/etc/hadoop/
-RUN mv /tmp/hbase-etc/* /opt/hbase/etc/
+RUN mv /tmp/hbase-etc/* /opt/hbase/conf/
 RUN mv /tmp/nutch-etc/* /opt/apache-nutch-2.2.1/conf/
 ENV NUTCH_ROOT /opt/apache-nutch-2.2.1
 RUN echo 'gora.datastore.default=org.apache.gora.hbase.store.HBaseStore' > /opt/apache-nutch-2.2.1/conf/gora.properties
