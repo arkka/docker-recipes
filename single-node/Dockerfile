@@ -1,5 +1,5 @@
 from stackbrew/ubuntu:saucy
-MAINTAINER Patrick Ting <pcting@gmail.com>
+MAINTAINER Radoslaw Stankiewicz <rrydziu@gmail.com>
 
 WORKDIR /root/
 
@@ -17,11 +17,12 @@ RUN echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true 
   apt-get install -y oracle-java7-installer oracle-java7-set-default
 
 # Install SSH server and Zookeeper
-RUN apt-get install -y openssh-server zookeeperd
+RUN apt-get install -y ant openssh-server zookeeperd=3.4.5
 
 # Download Hadoop
-RUN wget -q 'http://apache.cs.utah.edu/hadoop/common/hadoop-2.2.0/hadoop-2.2.0.tar.gz'
-
+RUN wget -q 'http://archive.apache.org/dist/hadoop/core/hadoop-0.20.204.0/hadoop-0.20.204.0-bin.tar.gz'
+RUN wget -q 'http://archive.apache.org/dist/hbase/hbase-0.90.4/hbase-0.90.4.tar.gz'
+RUN wget -q 'http://ftp.piotrkosoft.net/pub/mirrors/ftp.apache.org/nutch/2.2.1/apache-nutch-2.2.1-src.tar.gz'
 # Install util packages
 RUN apt-get install -y rsync curl
 
@@ -39,22 +40,49 @@ RUN chmod 600 /home/hduser/.ssh/config
 RUN sed -ri 's/session[[:blank:]]+required[[:blank:]]+pam_loginuid.so/session optional pam_loginuid.so/g' /etc/pam.d/sshd
 
 # Deploy and setup file permissions
-RUN tar xvfz /root/hadoop-2.2.0.tar.gz -C /opt && \
-  ln -s /opt/hadoop-2.2.0 /opt/hadoop && \
-  chown -R root:root /opt/hadoop-2.2.0 && \
-  mkdir /opt/hadoop-2.2.0/logs && \
-  chown -R hduser:hadoop /opt/hadoop-2.2.0/logs
+RUN tar xvfz /root/hadoop-0.20.204.0-bin.tar.gz -C /opt && \
+  ln -s /opt/hadoop-0.20.204.0 /opt/hadoop && \
+  chown -R root:root /opt/hadoop-0.20.204.0 && \
+  mkdir /opt/hadoop-0.20.204.0/logs && \
+  chown -R hduser:hadoop /opt/hadoop-0.20.204.0/logs
+  
+# Deploy and setup file permissions
+RUN tar xvfz /root/hbase-0.90.4.tar.gz -C /opt && \
+  ln -s /opt/hbase-0.90.4 /opt/hbase && \
+  chown -R root:root /opt/hbase-0.90.4 && \
+  mkdir /opt/hbase-0.90.4/logs && \
+  chown -R hduser:hadoop /opt/hbase-0.90.4/logs
 
+ # Deploy and setup file permissions
+RUN tar xvfz /root/apache-nutch-2.2.1-src.tar.gz -C /opt && \
+  chown -R root:root /opt/apache-nutch-2.2.1 && \
+  mkdir /opt/apache-nutch-2.2.1/logs && \
+  chown -R hduser:hadoop /opt/apache-nutch-2.2.1/logs
+  
 # Setup hduser environment
 ADD config/bashrc /home/hduser/.bashrc
 
 # Configure Hadoop
 ADD config/core-site.xml /tmp/hadoop-etc/core-site.xml
-ADD config/yarn-site.xml /tmp/hadoop-etc/yarn-site.xml
 ADD config/mapred-site.xml /tmp/hadoop-etc/mapred-site.xml
 ADD config/hdfs-site.xml /tmp/hadoop-etc/hdfs-site.xml
 
+ADD config/hbase-site.xml /tmp/hbase-etc/hbase-site.xml
+ADD config/nutch-site.xml /tmp/nutch-etc/nutch-site.xml
 RUN mv /tmp/hadoop-etc/* /opt/hadoop/etc/hadoop/
+RUN mv /tmp/hbase-etc/* /opt/hbase/etc/
+RUN mv /tmp/nutch-etc/* /opt/apache-nutch-2.2.1/conf/
+ENV NUTCH_ROOT /opt/apache-nutch-2.2.1
+RUN echo 'gora.datastore.default=org.apache.gora.hbase.store.HBaseStore' > /opt/apache-nutch-2.2.1/conf/gora.properties
+RUN vim -c 'g/name="gora-hbase"/+1d' -c 'x' $NUTCH_ROOT/ivy/ivy.xml
+RUN vim -c 'g/name="gora-hbase"/-1d' -c 'x' $NUTCH_ROOT/ivy/ivy.xml
+RUN cd $NUTCH_ROOT && ant runtime
+RUN ln -s /opt/apache-nutch-$NUTCH_VERSION/runtime/local /opt/nutch
+ENV NUTCH_HOME /opt/nutch
+ENV NUTCHSERVER_PORT 8899
+
+# NUTCH
+EXPOSE 8899
 
 # Expose SSHD
 EXPOSE 22
@@ -63,7 +91,7 @@ EXPOSE 22
 EXPOSE 2181 39534
 
 # NameNode (HDFS)
-EXPOSE 9000 50070
+EXPOSE 8020 50070 9000
 
 # DataNode (HDFS)
 EXPOSE 50010 50020 50075
@@ -71,14 +99,15 @@ EXPOSE 50010 50020 50075
 # SecondaryNameNode (HDFS)
 EXPOSE 50090
 
-# ResourceManager (YARN)
-EXPOSE 8030 8031 8032 8033 8088
+# Trackers
+EXPOSE 50030 50060
 
-# NodeManager (YARN)
-EXPOSE 8040 8042 13562 47784
+#HBASE
+EXPOSE 6000 60010 60020 60030
 
-# JobHistoryServer
-EXPOSE 10020 19888
+# Thrift
+EXPOSE 9090 9095
+
 
 # Create start script
 ADD config/run-hadoop.sh /root/run-hadoop.sh
