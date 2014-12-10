@@ -17,7 +17,7 @@ RUN echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true 
   apt-get install -y oracle-java7-installer oracle-java7-set-default
 
 # Install SSH server and Zookeeper
-RUN apt-get install -y ant openssh-server zookeeperd
+RUN apt-get install -y ant openssh-server zookeeperd vim
 
 # Download Hadoop
 RUN wget -q 'http://archive.apache.org/dist/hadoop/core/hadoop-0.20.204.0/hadoop-0.20.204.0-bin.tar.gz'
@@ -73,7 +73,7 @@ RUN mv /tmp/hadoop-etc/* /opt/hadoop/etc/hadoop/
 RUN mv /tmp/hbase-etc/* /opt/hbase/conf/
 RUN mv /tmp/nutch-etc/* /opt/apache-nutch-2.2.1/conf/
 ENV NUTCH_ROOT /opt/apache-nutch-2.2.1
-RUN echo 'gora.datastore.default=org.apache.gora.hbase.store.HBaseStore' > /opt/apache-nutch-2.2.1/conf/gora.properties
+RUN echo 'gora.datastore.default=org.apache.gora.hbase.store.HBaseStore' >> /opt/apache-nutch-2.2.1/conf/gora.properties
 RUN vim -c 'g/name="gora-hbase"/+1d' -c 'x' $NUTCH_ROOT/ivy/ivy.xml
 RUN vim -c 'g/name="gora-hbase"/-1d' -c 'x' $NUTCH_ROOT/ivy/ivy.xml
 RUN cd $NUTCH_ROOT && ant runtime
