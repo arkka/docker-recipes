@@ -6,7 +6,7 @@ set -x
 echo $AUTHORIZED_SSH_PUBLIC_KEY >> /home/hduser/.ssh/authorized_keys
 
 # format the namenode if it's not already done
-su -l -c 'mkdir -p /home/hduser/data/hadoop/nn /home/hduser/data/hadoop/dn && hdfs namenode -format -nonInteractive' hduser
+su -l -c 'mkdir -p /home/hduser/data/hadoop/nn /home/hduser/data/hadoop/dn && /opt/hadoop/bin/hadoop namenode -format' hduser
 
 # start ssh daemon
 service ssh start
@@ -18,18 +18,18 @@ service zookeeper start
 rm -fr /opt/hadoop/logs/*
 
 # start MAPRED
-su -l -c 'start-mapred.sh' hduser
+su -l -c '/opt/hadoop/bin/start-mapred.sh' hduser
 
 # start HDFS
-su -l -c 'start-dfs.sh' hduser
+su -l -c '/opt/hadoop/bin/start-dfs.sh' hduser
 
 #start HBASE
-su -l -c './start-hbase.sh' hduser
+su -l -c '/opt/hbase/bin/start-hbase.sh' hduser
 
 #start HBASE thrift
-su -l -c 'hbase thrift start > /opt/hbase/logs/thrift.log 2>&1 &' hduser
+su -l -c '/opt/hbase/bin/hbase thrift start > /opt/hbase/logs/thrift.log 2>&1 &' hduser
 
-su -l -c '$HADOOP_PREFIX/sbin/hadoop-daemon.sh start historyserver --config $HADOOP_CONF_DIR' hduser
+su -l -c '$HADOOP_PREFIX/bin/hadoop-daemon.sh start historyserver --config $HADOOP_CONF_DIR' hduser
 
 sleep 1
 

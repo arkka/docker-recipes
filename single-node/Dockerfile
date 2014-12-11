@@ -35,6 +35,7 @@ RUN su -l -c 'ssh-keygen -t rsa -f /home/hduser/.ssh/id_rsa -P ""' hduser && \
   cat /home/hduser/.ssh/id_rsa.pub | su -l -c 'tee -a /home/hduser/.ssh/authorized_keys' hduser
 ADD config/ssh-config /home/hduser/.ssh/config
 RUN chmod 600 /home/hduser/.ssh/config
+RUN chown hduser /home/hduser/.ssh/config
 
 # Fix Ubuntu 13.10 SSH daemon problem with docker: http://docs.docker.io/en/latest/examples/running_ssh_service/
 RUN sed -ri 's/session[[:blank:]]+required[[:blank:]]+pam_loginuid.so/session optional pam_loginuid.so/g' /etc/pam.d/sshd
@@ -69,16 +70,19 @@ ADD config/hdfs-site.xml /tmp/hadoop-etc/hdfs-site.xml
 
 ADD config/hbase-site.xml /tmp/hbase-etc/hbase-site.xml
 ADD config/nutch-site.xml /tmp/nutch-etc/nutch-site.xml
-RUN mv /tmp/hadoop-etc/* /opt/hadoop/etc/hadoop/
+RUN cp /tmp/hadoop-etc/* /opt/hadoop/conf/
+RUN mv /tmp/hadoop-etc/* /opt/hadoop/etc/hadoop
 RUN mv /tmp/hbase-etc/* /opt/hbase/conf/
 RUN mv /tmp/nutch-etc/* /opt/apache-nutch-2.2.1/conf/
+
 ENV NUTCH_ROOT /opt/apache-nutch-2.2.1
 RUN echo 'gora.datastore.default=org.apache.gora.hbase.store.HBaseStore' >> /opt/apache-nutch-2.2.1/conf/gora.properties
 RUN vim -c 'g/name="gora-hbase"/+1d' -c 'x' $NUTCH_ROOT/ivy/ivy.xml
 RUN vim -c 'g/name="gora-hbase"/-1d' -c 'x' $NUTCH_ROOT/ivy/ivy.xml
 RUN cd $NUTCH_ROOT && ant runtime
-RUN ln -s /opt/apache-nutch-$NUTCH_VERSION/runtime/local /opt/nutch
+RUN ln -s /opt/apache-nutch-2.2.1/runtime/local /opt/nutch
 ENV NUTCH_HOME /opt/nutch
+ENV HADOOP_HOME /opt/hadoop
 ENV NUTCHSERVER_PORT 8899
 
 # NUTCH
