@@ -1,5 +1,5 @@
-from stackbrew/ubuntu:saucy
-MAINTAINER Radoslaw Stankiewicz <rrydziu@gmail.com>
+from stackbrew/ubuntu:trusty
+MAINTAINER Arkka Dhiratara <arkka.d@gmail.com>
 
 WORKDIR /root/
 
@@ -22,7 +22,7 @@ RUN apt-get install -y ant openssh-server zookeeperd vim telnet
 # Download Hadoop
 RUN wget -q 'http://archive.apache.org/dist/hadoop/core/hadoop-0.20.204.0/hadoop-0.20.204.0-bin.tar.gz'
 RUN wget -q 'http://archive.apache.org/dist/hbase/hbase-0.90.4/hbase-0.90.4.tar.gz'
-RUN wget -q 'http://ftp.piotrkosoft.net/pub/mirrors/ftp.apache.org/nutch/2.2.1/apache-nutch-2.2.1-src.tar.gz'
+RUN wget -q 'https://archive.apache.org/dist/nutch/2.2.1/apache-nutch-2.2.1-src.tar.gz'
 # Install util packages
 RUN apt-get install -y rsync curl
 
@@ -36,9 +36,6 @@ RUN su -l -c 'ssh-keygen -t rsa -f /home/hduser/.ssh/id_rsa -P ""' hduser && \
 ADD config/ssh-config /home/hduser/.ssh/config
 RUN chmod 600 /home/hduser/.ssh/config
 RUN chown hduser /home/hduser/.ssh/config
-
-# Fix Ubuntu 13.10 SSH daemon problem with docker: http://docs.docker.io/en/latest/examples/running_ssh_service/
-RUN sed -ri 's/session[[:blank:]]+required[[:blank:]]+pam_loginuid.so/session optional pam_loginuid.so/g' /etc/pam.d/sshd
 
 # Deploy and setup file permissions
 RUN tar xvfz /root/hadoop-0.20.204.0-bin.tar.gz -C /opt && \
